@@ -1,7 +1,8 @@
 function Validator(options) {
 	var formElement = document.querySelector(options.form);
+
 	function validate(inputElement, rule, errorElement) {
-		var errorMessage = rule.test(inputElement.value);
+		var errorMessage = rule.test(inputElement.value); // goi ham test tuong ung voi tung object duoc tra ve trong rule
 
 		if (errorMessage) {
 			errorElement.innerText = errorMessage;
@@ -14,12 +15,12 @@ function Validator(options) {
 
 	if (formElement) {
 		options.rules.forEach((rule) => {
-			var inputElement = formElement.querySelector(rule.selector);
+			var inputElement = formElement.querySelector(rule.selector); // lay ra the input co id = "#rule.selector"
 			console.log(inputElement);
 			if (inputElement) {
 				var errorElement = inputElement.parentElement.querySelector(
 					options.errorElement
-				);
+				); // lay ra the span class = "form-message"
 
 				inputElement.onblur = () => {
 					validate(inputElement, rule, errorElement);
@@ -34,11 +35,11 @@ function Validator(options) {
 	}
 }
 
-Validator.isRequired = function (selector) {
+Validator.isRequired = function (selector, message) {
 	return {
 		selector: selector,
 		test: function (value) {
-			return value.trim() ? undefined : 'Vui lòng nhập trường này';
+			return value.trim() ? undefined : message || 'Vui lòng nhập trường này';
 		},
 	};
 };
@@ -58,10 +59,21 @@ Validator.password = function (selector) {
 	return {
 		selector: selector,
 		test: function (value) {
-			var validRegex = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}$/;
+			var validRegex = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{6,}$/;
 			return value.match(validRegex)
 				? undefined
-				: 'It must contain 8 or more characters that are of at least one number, and one uppercase and lowercase letter';
+				: '>= 6 ký tự, có in hoa, in thường và ký tự đặc biệt';
+		},
+	};
+};
+
+Validator.isComfirmed = function (selector, getComfirmValue, message) {
+	return {
+		selector: selector,
+		test: function (value) {
+			return value === getComfirmValue()
+				? undefined
+				: message || 'Gía trị nhập vào không chính xác';
 		},
 	};
 };
