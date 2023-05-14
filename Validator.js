@@ -1,9 +1,16 @@
+var selectorRules = {};
 function Validator(options) {
-	var formElement = document.querySelector(options.form);
-
 	function validate(inputElement, rule, errorElement) {
-		var errorMessage = rule.test(inputElement.value); // goi ham test tuong ung voi tung object duoc tra ve trong rule
-
+		var errorMessage;
+		// lay ra cac rules cua selector (#email, #full-name,...)
+		var rules = selectorRules[rule.selector];
+		// lap qua tung rule va kiem tra
+		// neu co loi thi dung kiem tra
+		for (let i = 0; i < rules.length; i++) {
+			errorMessage = rules[i](inputElement.value);
+			if (errorMessage) break;
+		}
+		// xu li thong bao loi
 		if (errorMessage) {
 			errorElement.innerText = errorMessage;
 			inputElement.parentElement.classList.add('invalid');
@@ -11,21 +18,66 @@ function Validator(options) {
 			errorElement.innerText = '';
 			inputElement.parentElement.classList.remove('invalid');
 		}
+
+		return !errorMessage;
 	}
 
+	// lay element cua form can validate
+	var formElement = document.querySelector(options.form);
+
 	if (formElement) {
-		options.rules.forEach((rule) => {
-			var inputElement = formElement.querySelector(rule.selector); // lay ra the input co id = "#rule.selector"
-			console.log(inputElement);
-			if (inputElement) {
+		// khi submit form
+		formElement.onsubmit = (e) => {
+			e.preventDefault();
+			var isFormValid = [];
+			// lap qua tung rule va validate
+			options.rules.forEach((rule) => {
+				var inputElement = formElement.querySelector(rule.selector);
 				var errorElement = inputElement.parentElement.querySelector(
 					options.errorElement
-				); // lay ra the span class = "form-message"
+				);
+				var isValid = validate(inputElement, rule, errorElement);
+				isFormValid.push(isValid);
+			});
 
+			if (!isFormValid.includes(false)) {
+				if (typeof options.onSubmit === 'function') {
+					var enableInputs = formElement.querySelectorAll('[name');
+					console.log(enableInputs);
+					console.log(Array.from(enableInputs)[0].name);
+					var formValues = Array.from(enableInputs).reduce(function (
+						values,
+						input
+					) {
+						return (values[input.name] = input.value) && values;
+					},
+					{});
+					options.onSubmit(formValues);
+				}
+			}
+		};
+
+		// lap qua moi rule va xu li
+		options.rules.forEach((rule) => {
+			// luu lai cac rules cho moi input
+			if (Array.isArray(selectorRules[rule.selector])) {
+				selectorRules[rule.selector].push(rule.test);
+			} else {
+				selectorRules[rule.selector] = [rule.test];
+			}
+			// lay the input co id = rule.selector
+			var inputElement = formElement.querySelector(rule.selector);
+			// lay ra the span class = options.errorElement
+			var errorElement = inputElement.parentElement.querySelector(
+				options.errorElement
+			);
+
+			if (inputElement) {
+				// xu li thong bao khi blur ra ngoai
 				inputElement.onblur = () => {
 					validate(inputElement, rule, errorElement);
 				};
-
+				// xu li thong bao khi nhap du lieu vao the input
 				inputElement.oninput = () => {
 					errorElement.innerText = '';
 					inputElement.parentElement.classList.remove('invalid');
