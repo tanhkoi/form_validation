@@ -72,6 +72,7 @@
 		<script>
 			Validator({
 				form: '#form-1',
+				formGroup: '.form-group',
 				errorElement: '.form-message',
 				rules: [
 					Validator.isRequired('#fullname', 'Vui lòng nhập tên đầy đủ của bạn'),
@@ -79,7 +80,7 @@
 					Validator.isEmail('#email'),
 					Validator.password('#password'),
 					Validator.isRequired('#password_confirmation'),
-					Validator.isComfirmed('#password_confirmation', function () {
+					Validator.isConfirmed('#password_confirmation', function () {
 						return document.querySelector('#form-1 #password').value;
 					}, 'Mật khẩu nhập lại không chính xác'),
 				],

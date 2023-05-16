@@ -1,16 +1,19 @@
 var selectorRules = {};
 function Validator(options) {
-	function validate(inputElement, rule, errorElement) {
-		var errorMessage;
-		// lay ra cac rules cua selector (#email, #full-name,...)
+	// hàm lấy ra outermost parent của thẻ selector
+	function getOuterMostParent(childElement, selector) {
+		return childElement.closest(selector);
+	}
+	// hàm lấy ra các rules mà selector có, và thông báo lỗi dựa trên những rule đó
+	function validate(inputElement, rule) {
+		var errorElement = getOuterMostParent(inputElement, options.formGroup).querySelector(options.errorElement);
+		
 		var rules = selectorRules[rule.selector];
-		// lap qua tung rule va kiem tra
-		// neu co loi thi dung kiem tra
+		var errorMessage;
 		for (let i = 0; i < rules.length; i++) {
 			errorMessage = rules[i](inputElement.value);
 			if (errorMessage) break;
 		}
-		// xu li thong bao loi
 		if (errorMessage) {
 			errorElement.innerText = errorMessage;
 			inputElement.parentElement.classList.add('invalid');
@@ -18,69 +21,52 @@ function Validator(options) {
 			errorElement.innerText = '';
 			inputElement.parentElement.classList.remove('invalid');
 		}
-
 		return !errorMessage;
 	}
 
-	// lay element cua form can validate
 	var formElement = document.querySelector(options.form);
-
 	if (formElement) {
-		// khi submit form
+		// xử lí khi submit form
 		formElement.onsubmit = (e) => {
 			e.preventDefault();
+			// kiểm tra ô input
 			var isFormValid = [];
-			// lap qua tung rule va validate
 			options.rules.forEach((rule) => {
 				var inputElement = formElement.querySelector(rule.selector);
-				var errorElement = inputElement.parentElement.querySelector(
-					options.errorElement
-				);
-				var isValid = validate(inputElement, rule, errorElement);
+				var isValid = validate(inputElement, rule);
 				isFormValid.push(isValid);
 			});
-
+			// nếu form không có lỗi thì trả về giá trị mà người dùng nhập vào
 			if (!isFormValid.includes(false)) {
 				if (typeof options.onSubmit === 'function') {
-					var enableInputs = formElement.querySelectorAll('[name');
-					console.log(enableInputs);
-					console.log(Array.from(enableInputs)[0].name);
-					var formValues = Array.from(enableInputs).reduce(function (
-						values,
-						input
-					) {
-						return (values[input.name] = input.value) && values;
-					},
-					{});
+					var enableInputs = formElement.querySelectorAll('[name]');
+					var formValues = Array.from(enableInputs).reduce((values, input) => {
+						values[input.name] = input.value;
+						return values;
+					}, {});
 					options.onSubmit(formValues);
 				}
 			}
 		};
-
-		// lap qua moi rule va xu li
+		
+		//
 		options.rules.forEach((rule) => {
-			// luu lai cac rules cho moi input
+			// chuyển các rule của một ô input vào object (selectorRules) có value là mảng để xử lí
 			if (Array.isArray(selectorRules[rule.selector])) {
 				selectorRules[rule.selector].push(rule.test);
 			} else {
 				selectorRules[rule.selector] = [rule.test];
 			}
-			// lay the input co id = rule.selector
+			//
 			var inputElement = formElement.querySelector(rule.selector);
-			// lay ra the span class = options.errorElement
-			var errorElement = inputElement.parentElement.querySelector(
-				options.errorElement
-			);
-
 			if (inputElement) {
-				// xu li thong bao khi blur ra ngoai
+				// xử lí khi blur
 				inputElement.onblur = () => {
-					validate(inputElement, rule, errorElement);
+					validate(inputElement, rule);
 				};
-				// xu li thong bao khi nhap du lieu vao the input
+				// xử lí khi nhập
 				inputElement.oninput = () => {
-					errorElement.innerText = '';
-					inputElement.parentElement.classList.remove('invalid');
+					validate(inputElement, rule);
 				};
 			}
 		});
@@ -119,11 +105,11 @@ Validator.password = function (selector) {
 	};
 };
 
-Validator.isComfirmed = function (selector, getComfirmValue, message) {
+Validator.isConfirmed = function (selector, getConfirmValue, message) {
 	return {
 		selector: selector,
 		test: function (value) {
-			return value === getComfirmValue()
+			return value === getConfirmValue()
 				? undefined
 				: message || 'Gía trị nhập vào không chính xác';
 		},
