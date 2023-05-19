@@ -3,7 +3,8 @@ function Validator(options) {
 	// hàm lấy ra outermost parent của thẻ selector
 	function getOuterMostParent(childElement, selector) {
 		return childElement.closest(selector);
-	}
+	  }
+	  
 	// hàm lấy ra các rules mà selector có, và thông báo lỗi dựa trên những rule đó
 	function validate(inputElement, rule) {
 		var errorElement = getOuterMostParent(inputElement, options.formGroup).querySelector(options.errorElement);
